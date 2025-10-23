@@ -1,0 +1,115 @@
+version: '3.8'
+
+services:
+  # PostgreSQL pour Airflow
+  postgres:
+    image: postgres:14
+    container_name: mlops-postgres
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    restart: always
+    networks:
+      - mlops-network
+
+  # Airflow Webserver - Pointe vers MLflow LOCAL
+  airflow-webserver:
+    image: apache/airflow:2.9.3-python3.10
+    container_name: mlops-airflow-webserver
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
+      - PYTHONPATH=/opt/project
+      - MLFLOW_TRACKING_URI=http://host.docker.internal:5000
+      - _AIRFLOW_WWW_USER_CREATE=True
+      - _AIRFLOW_WWW_USER_USERNAME=admin
+      - _AIRFLOW_WWW_USER_PASSWORD=admin
+    ports:
+      - "8080:8080"
+    volumes:
+      - ..:/opt/project
+      - ../airflow/dags:/opt/airflow/dags
+      - airflow-logs:/opt/airflow/logs
+    command: >
+      bash -c "
+        pip install --no-cache-dir -r /opt/project/requirements.txt &&
+        airflow db init &&
+        airflow users create --username admin --firstname Admin --lastname User --role Admin --email admin@example.com --password admin || true &&
+        airflow webserver
+      "
+    depends_on:
+      - postgres
+    restart: always
+    networks:
+      - mlops-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Airflow Scheduler - Pointe vers MLflow LOCAL
+  airflow-scheduler:
+    image: apache/airflow:2.9.3-python3.10
+    container_name: mlops-airflow-scheduler
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - PYTHONPATH=/opt/project
+      - MLFLOW_TRACKING_URI=http://host.docker.internal:5000
+    volumes:
+      - ..:/opt/project
+      - ../airflow/dags:/opt/airflow/dags
+      - airflow-logs:/opt/airflow/logs
+    command: >
+      bash -c "
+        pip install --no-cache-dir -r /opt/project/requirements.txt &&
+        airflow scheduler
+      "
+    depends_on:
+      - airflow-webserver
+    restart: always
+    networks:
+      - mlops-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # FastAPI - Pointe vers MLflow LOCAL
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    container_name: mlops-api
+    environment:
+      - PYTHONPATH=/app
+      - MLFLOW_TRACKING_URI=http://host.docker.internal:5000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ..:/app
+      - ../artifacts:/app/artifacts
+    command: uvicorn src.api:app --host 0.0.0.0 --port 8000
+    restart: always
+    networks:
+      - mlops-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  postgres-db-volume:
+  airflow-logs:
+
+networks:
+  mlops-network:
+    driver: bridge

@@ -1,30 +1,82 @@
+# ============================================
+# FICHIERS À NE PAS POUSSER SUR GITHUB
+# ============================================
+
 # Python
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
+*$py.class
 *.so
+.Python
 *.egg-info/
-.build/
 dist/
-.venv/
-venv/
-pip-wheel-metadata/
+build/
+.pytest_cache/
+.pytype/
 
-# Environnements / IDE
-.env
-.env.*
-*.code-workspace
+# Environnement virtuel
+venv/
+env/
+ENV/
+.venv
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# IDEs
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
-# OS
+# Fichiers système
 .DS_Store
 Thumbs.db
+*.log
 
-# Données locales / logs
-data/
-logs/
-.airflow/
-.airflow/*
-downloaded_files/
+# MLflow
+mlruns/
+mlartifacts/
+
+# Artifacts locaux (modèles entraînés)
+artifacts/
+*.joblib
+*.pkl
+*.h5
+*.pt
+
+# Docker
+*.pid
+
+# Airflow
+airflow/logs/
+airflow/*.db
+airflow/*.cfg
+airflow/*.pid
+airflow/airflow.db
+airflow/webserver_config.py
+airflow-webserver.pid
+
+# Base de données
+*.db
+*.sqlite
+*.sqlite3
+
+# Fichiers de configuration sensibles
+.env
+*.env
+.env.local
+secrets.yaml
+
+# Données (trop volumineuses)
+# data/*.csv  # Décommentez si vos données sont trop grandes
+
+# Dossiers temporaires
+tmp/
+temp/
+.cache/
+
+# MLartifacts
+mlartifacts/

@@ -1,5 +1,28 @@
-pandas
-scikit-learn
-joblib
-pytest
-requests
+# Core ML Libraries
+pandas==2.1.4
+scikit-learn==1.3.2
+numpy==1.26.2
+
+# MLOps Tools
+mlflow==2.9.2
+pydantic==2.5.3
+
+# API
+fastapi==0.108.0
+uvicorn[standard]==0.25.0
+python-multipart==0.0.6
+
+# Utilities
+joblib==1.3.2
+python-dotenv==1.0.0
+
+# Data Validation
+great-expectations==0.18.8
+
+# Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+httpx==0.26.0
+
+# Airflow (si vous l'installez localement)
+# apache-airflow==2.9.3
